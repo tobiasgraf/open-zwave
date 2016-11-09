@@ -687,7 +687,7 @@ bool Alarm::HandleMsg
 			value->OnValueRefreshed( _data[1] );
 			value->Release();
 		}
-		if ( GetVersion() <= 3)
+		if ( GetVersion() <= 2)
 		{
 		    if( (value = static_cast<ValueByte*>( GetValue( _instance, AlarmIndex_Level ) )) )
 		    {
