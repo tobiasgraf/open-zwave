@@ -687,10 +687,13 @@ bool Alarm::HandleMsg
 			value->OnValueRefreshed( _data[1] );
 			value->Release();
 		}
-		if( (value = static_cast<ValueByte*>( GetValue( _instance, AlarmIndex_Level ) )) )
+		if ( GetVersion() <= 3)
 		{
-			value->OnValueRefreshed( _data[2] );
-			value->Release();
+		    if( (value = static_cast<ValueByte*>( GetValue( _instance, AlarmIndex_Level ) )) )
+		    {
+		        value->OnValueRefreshed( _data[2] );
+		        value->Release();
+		    }
 		}
 
 		// With Version=2, the data has more detailed information about the alarm
@@ -714,8 +717,19 @@ bool Alarm::HandleMsg
 		    // alarmPrefixCount[notificationType]+event+3
 		    // If i get everything right, the event tells the application "here, something happend", and a Event_Inacativ message clears it" (some devices seem to do it with 0xFE instead of 0x00 -.-)
 		    // there is no "Event (e.g. motion alarm) is now active and now motion alarm is inactive...
+		    uint8 notificationStatus = _data[4];
 		    uint8 notificationType = _data[5];
 		    uint8 event = _data[6];
+		    ValueByte* value;
+
+		    // this is workaround for aeotec multisensor gen 5
+		    // this device sends motion on and off with the notification status, but the status is not exposed to the apps
+		    // so i abuse the AlarmLevel from version 1 and 2.
+	        if( (value = static_cast<ValueByte*>( GetValue( _instance, AlarmIndex_Level ) )) )
+	        {
+	            value->OnValueRefreshed( notificationStatus );
+	            value->Release();
+	        }
 		    if ( event == 0x00 || event == 0xFE )
 		    {
 		        //clear all events untill i find a device that does it right \o/
@@ -844,6 +858,10 @@ void Alarm::CreateVars
 	{
 		node->CreateValueByte( ValueID::ValueGenre_User, GetCommandClassId(), _instance, AlarmIndex_Type, "Alarm Type", "", true, false, 0, 0 );
 		node->CreateValueByte( ValueID::ValueGenre_User, GetCommandClassId(), _instance, AlarmIndex_Level, "Alarm Level", "", true, false, 0, 0 );
+		if ( GetVersion() >= 3)
+		{
+		    node->CreateValueByte( ValueID::ValueGenre_User, GetCommandClassId(), _instance, AlarmIndex_Level, "Alarm Level", "", true, false, 0, 0 );
+		}
 	}
 }
 
